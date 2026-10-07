@@ -120,6 +120,7 @@ dialog#note::backdrop{background:rgba(0,0,0,.35)}
 #note .del{margin-right:auto;color:#c0392b;background:none;padding-inline:4px}
 .toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);background:var(--fg);color:var(--bg);font:600 14px var(--sans);padding:10px 16px;border-radius:20px;z-index:9;box-shadow:var(--shadow)}
 /* Module 5 : pilule d'outils (haut), versions, réglages. */
+@media (min-width:1024px){.bar{padding-inline:20px}.bar>div{max-width:none;justify-content:flex-end}#q{flex:0 1 420px}.bar .tabs{margin-right:auto}}
 .tools{display:flex;flex:none;border:1px solid var(--line);background:var(--chip);border-radius:40px;padding:4px;box-shadow:var(--shadow)}
 .tool{width:42px;height:42px;border-radius:50%;border:0;background:none;color:var(--fg);display:grid;place-items:center;cursor:pointer;padding:0;overflow:hidden;
   transition:width .28s ease,opacity .2s ease}
@@ -516,7 +517,7 @@ $("find").onclick=()=>{const q=$("q"),open=q.hidden;q.hidden=!open;tabs.hidden=o
   if(open)q.focus();else{q.value="";st.q="";render()}};
 $("q").oninput=e=>{st.q=e.target.value;render()};
 // Module 5a : pilule d'outils. Repliée = 2 boutons ; 1er clic déploie le 3e, clic sur une option = action + repli.
-const tools=$("tools");
+const tools=$("tools");const mqW=matchMedia("(min-width:1024px)"),putTools=()=>{mqW.matches?$("tabs").after(tools):$("h1").after(tools)};putTools();mqW.addEventListener("change",putTools);
 tools.addEventListener("click",e=>{const b=e.target.closest(".tool");
   if(tools.classList.contains("fold")&&!tools.classList.contains("open")){e.stopPropagation();tabs.classList.remove("open");tools.classList.add("open");return}
   tools.classList.remove("open");if(!b)e.stopPropagation()},true);
