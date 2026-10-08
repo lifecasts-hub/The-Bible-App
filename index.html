@@ -446,6 +446,7 @@ async function copyTxt(t){
 $("aCopy").onclick=async()=>{if(await copyTxt(shareTxt())){sel=[];upSel()}};
 // Partager : feuille de partage du système ; à défaut (ordinateur), copie dans le presse-papiers.
 $("aShare").onclick=async()=>{const t=shareTxt();
+  if(window.LCNative){LCNative.share(ref(sel),t);sel=[];upSel();return}
   if(navigator.share){try{await navigator.share({title:ref(sel),text:t});sel=[];upSel()}catch(e){if(e.name!=="AbortError")await copyTxt(t)}}
   else if(await copyTxt(t)){sel=[];upSel()}};
 // Lien ouvert dans un navigateur : propose d'ouvrir l'appli sur le même passage.
