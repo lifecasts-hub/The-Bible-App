@@ -760,7 +760,11 @@ twice("xRst",()=>{Object.assign(SET,DEF);saveSet();toast("Réglages réinitialis
 // en https sur un domaine déclaré chez eux comme URI de redirection (AUTH.redirect, vide = adresse de la page).
 // Google et Microsoft : OpenID Connect (jeton d'identité renvoyé dans le fragment, fenêtre surgissante ou redirection).
 // Apple : SDK « Sign in with Apple JS ». Le jeton n'est pas vérifié par un serveur : il sert à identifier le profil local.
-const AUTH={google:"",microsoft:"",apple:"",redirect:""};
+const AUTH={google:"922202570064-af1s9pn19o9fhvrf5604ol30erff79fu.apps.googleusercontent.com",microsoft:"",apple:"",redirect:""};
+// Session partagée avec le site LifeCasts (même adresse github.io) : le site range l'utilisateur Google dans localStorage.lifecasts_user.
+// Sur cette adresse, « Continuer avec Google » passe par le site (/?retour=…) puis revient ici ; ailleurs, flux OpenID ci-dessous.
+const SITE_KEY="lifecasts_user",ON_SITE=location.origin==="https://lifecasts-hub.github.io";
+const siteUser=()=>{try{const u=JSON.parse(localStorage.getItem(SITE_KEY));return u&&u.id&&u.email?u:null}catch(e){return null}};
 const OIDC={google:"https://accounts.google.com/o/oauth2/v2/auth",microsoft:"https://login.microsoftonline.com/common/oauth2/v2.0/authorize"};
 const PV={google:"Google",apple:"Apple (iCloud)",microsoft:"Microsoft",lifecasts:"LifeCasts"};
 const RED=()=>AUTH.redirect||location.origin+location.pathname;
@@ -797,6 +801,7 @@ function addAcc(a){const old=ACC.find(x=>x.id===a.id);
       const v=localStorage.getItem("lsg."+k);if(v!==null){localStorage.setItem(`lsg.${k}.${a.id}`,v);localStorage.removeItem("lsg."+k)}}}catch(e){}}
   adding=false;useAcc(a.id);toast("Connecté : "+cur().name);if(!old)askAge()}
 function signOut(del){const id=CUR;
+  if((cur()||{}).site)try{localStorage.removeItem(SITE_KEY)}catch(e){}
   if(del)for(const k of["hl","notes","colors","links"])try{localStorage.removeItem(`lsg.${k}.${id}`)}catch(e){}
   ACC=ACC.filter(a=>a.id!==id);adding=false;useAcc(ACC[0]?ACC[0].id:"");toast(del?"Compte supprimé":"Déconnecté")}
 function askAge(){const a=cur();$("ageI").value=a.by?yr()-a.by:"";$("ageD").showModal()}
@@ -812,6 +817,8 @@ $("acct").onclick=e=>{const b=e.target.closest("button");if(!b)return;
   if(b.id==="outB")signOut(false)};
 function signIn(p){
   if(p==="lifecasts"){$("lcF").reset();$("lcD").showModal();return}
+  if(p==="google"&&ON_SITE){try{sessionStorage.setItem("lc.site.go","1")}catch(e){}
+    location.href="/?retour="+encodeURIComponent(location.pathname+location.hash);return}
   if(!AUTH[p])return toast(`Connexion ${PV[p]} : identifiant client à configurer`);
   if(p==="apple")return apple();
   const state=`p.${p}.${rnd()}`,nonce=rnd();
@@ -843,6 +850,18 @@ async function apple(){try{
 applySet();
 if(!authReturn()){render();openHash();if(SET.resume&&!location.hash&&pos){const[c,n]=pos.split("/");if(TEXT[c]&&TEXT[c][n-1])go(c,+n)}}
 addEventListener("hashchange",openHash);
+// Aligne les comptes sur la session du site : connexion faite sur le site = compte Google ici ; déconnexion sur le site = retrait ici
+// (les surlignages et notes restent sur l'appareil et reviennent à la prochaine connexion).
+function syncSite(){const u=siteUser(),id=u?"g:"+u.id:"";let go=false;
+  try{go=sessionStorage.getItem("lc.site.go")==="1";sessionStorage.removeItem("lc.site.go")}catch(e){}
+  const gone=ACC.filter(a=>a.site&&a.id!==id);
+  if(gone.length){ACC=ACC.filter(a=>!gone.includes(a));useAcc(ACC.some(a=>a.id===CUR)?CUR:ACC[0]?ACC[0].id:"")}
+  const old=u&&ACC.find(a=>a.id===id);
+  if(old){Object.assign(old,{site:1,name:u.name||old.name,email:u.email||old.email,pic:u.picture||old.pic});
+    if(go&&CUR!==id)useAcc(id);else saveAcc()}
+  else if(u)addAcc({id,p:"google",name:u.name||"",email:u.email,pic:u.picture||"",site:1});
+  drawAcct()}
+if(ON_SITE){syncSite();addEventListener("storage",e=>{if(e.key===SITE_KEY)syncSite()})}
 </script>
 
 </body></html>
