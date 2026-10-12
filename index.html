@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){/* ▼ NUMÉRO DE VERSION — rempli automatiquement par admin.html à la publication */var B="0.8";window.LC_BUILT=B;
+<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9";window.LC_BUILT=B;
 function c(a,b){a=String(a).split(".");b=String(b).split(".");for(var i=0;i<Math.max(a.length,b.length);i++){var d=(+a[i]||0)-(+b[i]||0);if(d)return d>0?1:-1}return 0}window.LC_CMP=c;
 if(window.LC_OTA_VER){window.LC_VER=window.LC_OTA_VER;return}window.LC_VER=B;
 if(location.protocol!=="file:")return;
@@ -885,8 +885,29 @@ function fbPush(){if(!fbOk())return;clearTimeout(fbT);fbT=setTimeout(()=>{if(!fb
 function fbApply(d,merge){fbMute=true;
   for(const[o,k]of[[HL,"hl"],[NOTES,"notes"],[LINKS,"links"]]){const l={...o};for(const x in o)delete o[x];Object.assign(o,d[k]||{},merge?l:{});save("lsg."+k,o)}
   CUST=[...new Set([...(d.colors||[]),...(merge?CUST:[])])];save("lsg.colors",CUST);swatches();render();fbMute=false}
-async function fbIn(){if(!FA)return toast("Connexion indisponible (hors ligne ?)");const pr=new firebase.auth.GoogleAuthProvider();pr.setCustomParameters({prompt:"select_account"});
+async function fbIn(){if(!FA)return toast("Connexion indisponible (hors ligne ?)");if(location.protocol==="file:")return fbPair();const pr=new firebase.auth.GoogleAuthProvider();pr.setCustomParameters({prompt:"select_account"});
   try{await FA.signInWithPopup(pr)}catch(e){if(/popup-blocked|operation-not-supported/.test(e.code||""))FA.signInWithRedirect(pr);else if(!/cancelled|closed/.test(e.code||""))toast("Connexion refusée : "+(e.code||""))}}
+// App (file://) : la connexion Google se fait sur le site. Code d'appairage dans pairings/{code} ; le site y dépose le idToken Google, l'app fait signInWithCredential puis supprime le document.
+const PAIR_URL="https://lifecasts-hub.github.io/The-Bible-App/";let pairOff=null;
+async function fbPair(){try{const a=new Uint8Array(18);crypto.getRandomValues(a);const c=[...a].map(x=>x.toString(16).padStart(2,"0")).join("");
+  await FD.doc("pairings/"+c).set({at:Date.now()});localStorage.setItem("lc.pair",c);fbPairWait(c);
+  toast("Connectez-vous sur le site, puis revenez ici");location.href=PAIR_URL+"?pair="+c}
+  catch(e){toast("Connexion indisponible (hors ligne ?)")}}
+function fbPairWait(c){if(pairOff)pairOff();const r=FD.doc("pairings/"+c),end=()=>{if(pairOff){pairOff();pairOff=null}localStorage.removeItem("lc.pair");r.delete().catch(()=>{})};
+  pairOff=r.onSnapshot(async s=>{const d=s.data();if(!s.exists||(d&&Date.now()-d.at>15*6e4))return end();if(!d||!d.t)return;
+    end();try{await FA.signInWithCredential(firebase.auth.GoogleAuthProvider.credential(d.t))}catch(e){toast("Connexion refusée : "+(e.code||""))}},()=>{})}
+// Site : page ouverte par l'app avec ?pair=CODE → bouton de liaison (le popup exige un clic).
+function pairSite(){const c=new URLSearchParams(location.search).get("pair");if(!c||!/^[0-9a-f]{36}$/.test(c))return;
+  const o=document.createElement("div");o.style.cssText="position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:rgba(0,0,0,.5);padding:16px;font:15px -apple-system,BlinkMacSystemFont,sans-serif";
+  const B="border:0;border-radius:12px;padding:12px 16px;font:inherit;margin-top:14px;width:100%;background:#141413;color:#fff";
+  const show=(t,x,btn)=>{o.innerHTML=`<div style="background:#fff;color:#141413;border-radius:22px;padding:22px;width:min(92vw,420px)"><h3 style="margin:0 0 8px">${t}</h3><div style="opacity:.8">${x}</div>${btn?`<button style="${B}">${btn}</button>`:""}</div>`;return o.querySelector("button")};
+  const go=async()=>{const pr=new firebase.auth.GoogleAuthProvider();pr.setCustomParameters({prompt:"select_account"});
+    try{const r=await FA.signInWithPopup(pr),t=r.credential&&r.credential.idToken;if(!t)throw{code:"no-token"};
+      await FD.doc("pairings/"+c).update({t,uid:r.user.uid});history.replaceState(null,"",location.pathname);
+      show("C'est fait !","Votre compte est lié. Revenez dans l'application Bible LifeCasts.","Retour à l'application").onclick=()=>{location.href="lifecasts://bible"};
+      setTimeout(()=>{location.href="lifecasts://bible"},800)}
+    catch(e){show("Échec de la connexion",(e.code==="not-found"||e.code==="permission-denied")?"Ce lien a expiré. Relancez la connexion depuis l'application.":"Erreur : "+(e.code||"inconnue"),"Réessayer").onclick=go}};
+  document.body.appendChild(o);show("Connexion à l'application","Connectez-vous avec Google pour lier l'application Bible LifeCasts à votre compte.","Se connecter avec Google").onclick=go}
 async function fbUser(u){if(fbOff){fbOff();fbOff=null}fbMute=true;
   if(!u){const g=ACC.filter(a=>a.fb);fbUid="";if(g.length){ACC=ACC.filter(a=>!a.fb);useAcc(ACC.some(a=>a.id===CUR)?CUR:ACC[0]?ACC[0].id:"")}drawAcct();return}
   const id="f:"+u.uid;let a=ACC.find(x=>x.id===id),neu=!a;
@@ -907,7 +928,8 @@ const FBV="https://www.gstatic.com/firebasejs/10.14.1/firebase-";
 script(FBV+"app-compat.js").then(()=>Promise.all(["auth","firestore"].map(m=>script(FBV+m+"-compat.js")))).then(()=>{
   firebase.initializeApp(FBC);FA=firebase.auth();FD=firebase.firestore();
   try{FD.enablePersistence({synchronizeTabs:true}).catch(()=>{})}catch(e){}
-  FA.getRedirectResult().catch(()=>{});FA.onAuthStateChanged(fbUser)}).catch(()=>{});
+  FA.getRedirectResult().catch(()=>{});FA.onAuthStateChanged(fbUser);
+  if(location.protocol==="file:"){const c=localStorage.getItem("lc.pair");if(c)fbPairWait(c)}else pairSite()}).catch(()=>{});
 </script>
 
 <script>/*LC-OTA*/(function(){
