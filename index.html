@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.1";window.LC_BUILT=B;
+<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.2";window.LC_BUILT=B;
 function c(a,b){a=String(a).split(".");b=String(b).split(".");for(var i=0;i<Math.max(a.length,b.length);i++){var d=(+a[i]||0)-(+b[i]||0);if(d)return d>0?1:-1}return 0}window.LC_CMP=c;
 if(window.LC_OTA_VER){window.LC_VER=window.LC_OTA_VER;return}window.LC_VER=B;
 if(location.protocol!=="file:")return;
@@ -319,7 +319,7 @@ body.flow .txt p[data-v]{display:inline}body.flow .txt p[data-v]::after{content:
     <h3>Données</h3>
     <div class="card">
       <div class="srow" data-i="pen"><span>Surlignages, notes et liens<small id="sCnt"></small></span><span class="acts"><button class="ab" id="xExp">Copier</button><button class="ab" id="xImp">Importer</button></span></div>
-      <div class="srow" data-i="sync"><span>Synchronisation entre appareils</span><span class="soon" style="background:#2e7d32;color:#fff">Disponible</span></div>
+      <div class="srow" data-i="sync"><span>Synchronisation entre appareils</span><span class="soon">Bientôt</span></div>
       <div class="srow" data-i="reset"><span>Réinitialiser les réglages</span><button class="ab" id="xRst">Réinitialiser</button></div>
       <div class="srow" data-i="trash"><span class="danger">Effacer surlignages, notes et liens</span><button class="ab danger" id="xClr">Effacer</button></div>
     </div>
@@ -944,30 +944,28 @@ function close(){var d=document.getElementById("lcUp");if(d)d.remove()}
 function esc(s){return String(s||"").replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})}
 function idbPut(h){return new Promise(function(ok,ko){var r=indexedDB.open("lc-ota",1);r.onupgradeneeded=function(){r.result.createObjectStore("f")};r.onerror=ko;
   r.onsuccess=function(){var t=r.result.transaction("f","readwrite");t.objectStore("f").put(h,"html");t.oncomplete=ok;t.onerror=ko}})}
+var SRC="https://lifecasts-hub.github.io/The-Bible-App/index.html";
 async function check(manual){
-  if(busy||typeof FD==="undefined"||!FD||!navigator.onLine)return;busy=true;last=Date.now();
+  if(busy||!navigator.onLine)return;busy=true;last=Date.now();
   try{
-    var s=await FD.collection("apps").doc(APP).get({source:"server"}),U=s.exists&&s.data().latest;
-    if(!U||LC_CMP(U.version,LC_VER)<=0){if(manual)toast("L'application est à jour");return}
-    var fk=U.files&&(U.files[plat]?plat:U.files.android?"android":U.files.ios?"ios":null);if(!fk)return;
-    window.lcUpd={U:U,fk:fk};var t=document.getElementById("lcUpTxt");if(t)t.innerHTML='🔴 <b>Mise à jour disponible : v'+esc(U.version)+'</b> — toucher pour télécharger';
+    var r=await fetch(SRC+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw 0;
+    var h=await r.text(),m=h.match(/var B="([\d.]+)"/);if(!m||h.indexOf("/*LC-OTA*/")<0)throw 0;
+    var U={version:m[1],h:h},t=document.getElementById("lcUpTxt");
+    if(LC_CMP(U.version,LC_VER)<=0){if(manual)toast("L'application est à jour (v"+LC_VER+")");return}
+    window.lcUpd={U:U};if(t)t.innerHTML='🔴 <b>Mise à jour disponible : v'+esc(U.version)+'</b> — toucher pour installer';
     if(!manual&&L.getItem("lc.ota.skip")===U.version&&Date.now()-(+L.getItem("lc.ota.skipAt")||0)<12*36e5)return;
-    var d=box("<h4>Mise à jour disponible</h4><div>Version "+esc(U.version)+" (vous avez la "+esc(LC_VER)+")</div><div class='n'>"+esc(U.notes)+"</div><div class='b'><button id='lcL'>Plus tard</button><button class='p' id='lcG'>Télécharger</button></div>");
+    var d=box("<h4>Mise à jour disponible</h4><div>Version "+esc(U.version)+" (vous avez la "+esc(LC_VER)+")</div><div class='b'><button id='lcL'>Plus tard</button><button class='p' id='lcG'>Installer</button></div>");
     d.querySelector("#lcL").onclick=function(){L.setItem("lc.ota.skip",U.version);L.setItem("lc.ota.skipAt",Date.now());close()};
-    d.querySelector("#lcG").onclick=function(){get(U,fk)};
+    d.querySelector("#lcG").onclick=function(){get(U)};
   }catch(e){if(manual)toast("Vérification impossible pour l'instant")}finally{busy=false}
 }
-async function get(U,fk){
-  var f=U.files[fk],d=box("<h4>Téléchargement…</h4><div>Version "+esc(U.version)+"</div><progress max='"+f.n+"' value='0'></progress>"),pg=d.querySelector("progress"),h="";
-  try{var ref=FD.collection("apps").doc(APP).collection("versions").doc(U.version).collection("chunks");
-    for(var k=0;k<f.n;k++){var c=await ref.doc(fk+"_"+k).get({source:"server"});h+=c.data().d;pg.value=k+1}
-    if(h.length!==f.len||h.indexOf("/*LC-OTA*/")<0)throw new Error("fichier incomplet");
-    await idbPut(h);L.setItem("lc.ota.ver",U.version);L.removeItem("lc.ota.try");
+async function get(U){
+  try{await idbPut(U.h);L.setItem("lc.ota.ver",U.version);L.removeItem("lc.ota.try");
     box("<h4>Mise à jour prête</h4><div>La version "+esc(U.version)+" est installée. L'application va redémarrer.</div><div class='b'><button class='p' id='lcR'>Redémarrer</button></div>").querySelector("#lcR").onclick=function(){location.reload()};
-  }catch(e){box("<h4>Échec du téléchargement</h4><div>"+esc(e.message)+". Réessayez plus tard.</div><div class='b'><button id='lcX'>Fermer</button></div>").querySelector("#lcX").onclick=close}
+  }catch(e){box("<h4>Échec de l'installation</h4><div>Réessayez plus tard.</div><div class='b'><button id='lcX'>Fermer</button></div>").querySelector("#lcX").onclick=close}
 }
-window.lcCheckUpdate=function(){var u=window.lcUpd;u?get(u.U,u.fk):check(true)};
-(function w(){FD?check():setTimeout(w,2000)})();setInterval(check,6*36e5);
+window.lcCheckUpdate=function(){var u=window.lcUpd;u?get(u.U):check(true)};
+setTimeout(check,3000);setInterval(check,6*36e5);
 document.addEventListener("visibilitychange",function(){if(!document.hidden&&Date.now()-last>36e5)check()});
 })()</script>
 </body></html>
