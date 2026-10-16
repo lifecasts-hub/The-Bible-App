@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.4";window.LC_BUILT=B;
+<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.5";window.LC_BUILT=B;
 function c(a,b){a=String(a).split(".");b=String(b).split(".");for(var i=0;i<Math.max(a.length,b.length);i++){var d=(+a[i]||0)-(+b[i]||0);if(d)return d>0?1:-1}return 0}window.LC_CMP=c;
 if(window.LC_OTA_VER){window.LC_VER=window.LC_OTA_VER;return}window.LC_VER=B;
 if(location.protocol!=="file:")return;
@@ -403,7 +403,7 @@ const row=b=>TEXT[b.code]
   :`<li><span class="n">${b.n}</span><span class="t">${b.name}</span></li>`;
 let pos=null;try{pos=localStorage.getItem("lsg.pos")}catch(e){}
 
-// Module 3 : sélection / surlignage / notes / copie. Stockage local : lsg.hl et lsg.notes, clés "GEN/1/1".
+// Module 3 : sélection / surlignage / notes / copie. Stockage local : lsg.hl et lsg.notes, clés "GEN/1/1". Dates des notes : lsg.ndates {clé:{c:création,m:modif}} en ms.
 // APP_URL : base des liens copiés. "lifecasts://bible/" ouvre l'appli installée sur le verset.
 // Quand le site existera : mettre son adresse https (page qui ouvre l'appli ou propose de l'installer).
 const APP_URL="lifecasts://bible/";
@@ -419,7 +419,7 @@ if(!ACC.some(a=>a.id===CUR))CUR="";
 const NS=k=>CUR&&/^lsg\.(hl|notes|colors|links)$/.test(k)?k+"."+CUR:k;
 const load=k=>{try{return JSON.parse(localStorage.getItem(NS(k)))||{}}catch(e){return{}}};
 const save=(k,o)=>{try{localStorage.setItem(NS(k),JSON.stringify(o))}catch(e){}fbPush()};
-const HL=load("lsg.hl"),NOTES=load("lsg.notes"),LINKS=load("lsg.links");
+const HL=load("lsg.hl"),NOTES=load("lsg.notes"),NDATE=load("lsg.ndates"),LINKS=load("lsg.links");
 let sel=[],noteV=0;
 const key=v=>`${st.book}/${st.ch}/${v}`;
 const NI=`<button class="ni" aria-label="Voir la note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 4h14v11l-5 5H5z"/><path d="M14 20v-5h5"/></svg></button>`;
@@ -494,8 +494,8 @@ function openNote(v){noteV=v;const k=key(v);$("nT").textContent=`Note · ${ref([
 function noteMode(ed){$("nR").hidden=$("nEd").hidden=ed;$("nV").hidden=$("nOk").hidden=!ed;$("nNo").textContent=ed?"Annuler":"Fermer";if(ed)setTimeout(()=>$("nV").focus())}
 $("nEd").onclick=()=>noteMode(true);
 function setNote(t){const k=key(noteV),p=pv(noteV),ic=p.querySelector(".ni");t=t.trim();
-  if(t){NOTES[k]=t;if(!ic)p.insertAdjacentHTML("beforeend",NI)}else{delete NOTES[k];if(ic)ic.remove()}
-  save("lsg.notes",NOTES);$("note").close();sel=[];upSel()}
+  const now=Date.now();if(t){if(NOTES[k]!==t){const d=NDATE[k]||{};NDATE[k]={c:d.c||now,m:now}}NOTES[k]=t;if(!ic)p.insertAdjacentHTML("beforeend",NI)}else{delete NOTES[k];delete NDATE[k];if(ic)ic.remove()}
+  save("lsg.ndates",NDATE);save("lsg.notes",NOTES);$("note").close();sel=[];upSel()}
 $("aNote").onclick=()=>openNote(sel[0]);
 $("nOk").onclick=()=>setNote($("nV").value);
 $("nDel").onclick=()=>setNote("");
@@ -769,15 +769,15 @@ function syncSet(){document.querySelectorAll("#set [data-k]").forEach(el=>{const
 function saveSet(){save("lsg.set",SET);applySet();syncSet()}
 $("set").addEventListener("click",e=>{const b=e.target.closest(".seg button");if(b){SET[b.parentNode.dataset.k]=b.dataset.val;saveSet()}});
 $("set").addEventListener("input",e=>{const el=e.target,k=el.dataset.k;if(!k)return;SET[k]=el.type==="checkbox"?el.checked:el.type==="range"?+el.value:el.value;saveSet()});
-$("xExp").onclick=async()=>{const t=JSON.stringify({hl:HL,notes:NOTES,links:LINKS,colors:CUST,set:SET});
+$("xExp").onclick=async()=>{const t=JSON.stringify({hl:HL,notes:NOTES,ndates:NDATE,links:LINKS,colors:CUST,set:SET});
   try{await navigator.clipboard.writeText(t);toast("Sauvegarde copiée")}catch(e){toast("Copie impossible")}};
 $("xImp").onclick=()=>$("xFile").click();
 $("xFile").onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());
-    Object.assign(HL,d.hl||{});Object.assign(NOTES,d.notes||{});Object.assign(LINKS,d.links||{});save("lsg.links",LINKS);for(const c of d.colors||[])if(!CUST.includes(c))CUST.push(c);
+    Object.assign(HL,d.hl||{});Object.assign(NOTES,d.notes||{});Object.assign(NDATE,d.ndates||{});save("lsg.ndates",NDATE);Object.assign(LINKS,d.links||{});save("lsg.links",LINKS);for(const c of d.colors||[])if(!CUST.includes(c))CUST.push(c);
     save("lsg.hl",HL);save("lsg.notes",NOTES);save("lsg.colors",CUST);swatches();syncSet();toast("Import réussi")}catch(x){toast("Fichier invalide")}e.target.value=""};
 function twice(id,fn){let t=0;const b=$(id),l=b.textContent;b.onclick=()=>{if(t){clearTimeout(t);t=0;b.textContent=l;fn();return}
   b.textContent="Confirmer ?";t=setTimeout(()=>{t=0;b.textContent=l},3000)}}
-twice("xClr",()=>{for(const k in HL)delete HL[k];for(const k in NOTES)delete NOTES[k];for(const k in LINKS)delete LINKS[k];save("lsg.hl",HL);save("lsg.notes",NOTES);save("lsg.links",LINKS);syncSet();toast("Données effacées")});
+twice("xClr",()=>{for(const k in HL)delete HL[k];for(const k in NOTES)delete NOTES[k];for(const k in NDATE)delete NDATE[k];save("lsg.ndates",NDATE);for(const k in LINKS)delete LINKS[k];save("lsg.hl",HL);save("lsg.notes",NOTES);save("lsg.links",LINKS);syncSet();toast("Données effacées")});
 twice("xRst",()=>{Object.assign(SET,DEF);saveSet();toast("Réglages réinitialisés")});
 // Module 6b : connexion. Renseigner AUTH avec les identifiants client de chaque fournisseur ; la page doit être servie
 // en https sur un domaine déclaré chez eux comme URI de redirection (AUTH.redirect, vide = adresse de la page).
@@ -815,19 +815,19 @@ function drawAcct(){const a=cur();
     +`<div class="srow"><span class="danger">Supprimer le compte<small>Et ses surlignages et notes, sur cet appareil</small></span><button class="ab danger" id="delB">Supprimer</button></div></div>`;
   twice("delB",()=>signOut(true))}
 function useAcc(id){CUR=id;saveAcc();
-  for(const k in HL)delete HL[k];for(const k in NOTES)delete NOTES[k];for(const k in LINKS)delete LINKS[k];
-  Object.assign(HL,load("lsg.hl"));Object.assign(NOTES,load("lsg.notes"));Object.assign(LINKS,load("lsg.links"));
+  for(const k in HL)delete HL[k];for(const k in NOTES)delete NOTES[k];for(const k in NDATE)delete NDATE[k];for(const k in LINKS)delete LINKS[k];
+  Object.assign(HL,load("lsg.hl"));Object.assign(NOTES,load("lsg.notes"));Object.assign(NDATE,load("lsg.ndates"));Object.assign(LINKS,load("lsg.links"));
   const c=load("lsg.colors");CUST=Array.isArray(c)?c:[];swatches();sel=[];upSel();render()}
 function addAcc(a){const old=ACC.find(x=>x.id===a.id);
   if(old)Object.assign(old,{name:a.name||old.name,email:a.email||old.email,pic:a.pic||old.pic});
   else{a.name=a.name||a.email||"Compte "+PV[a.p];ACC.push(a);
     // premier passage de ce compte sur l'appareil : il reprend les données saisies en invité
-    try{if(localStorage.getItem("lsg.hl."+a.id)===null&&localStorage.getItem("lsg.notes."+a.id)===null)for(const k of["hl","notes","colors","links"]){
+    try{if(localStorage.getItem("lsg.hl."+a.id)===null&&localStorage.getItem("lsg.notes."+a.id)===null)for(const k of["hl","notes","ndates","colors","links"]){
       const v=localStorage.getItem("lsg."+k);if(v!==null){localStorage.setItem(`lsg.${k}.${a.id}`,v);localStorage.removeItem("lsg."+k)}}}catch(e){}}
   adding=false;useAcc(a.id);toast("Connecté : "+cur().name);if(!old)askAge()}
 function signOut(del){const id=CUR;if((cur()||{}).fb&&FA)FA.signOut();
   if((cur()||{}).site)try{localStorage.removeItem(SITE_KEY)}catch(e){}
-  if(del)for(const k of["hl","notes","colors","links"])try{localStorage.removeItem(`lsg.${k}.${id}`)}catch(e){}
+  if(del)for(const k of["hl","notes","ndates","colors","links"])try{localStorage.removeItem(`lsg.${k}.${id}`)}catch(e){}
   ACC=ACC.filter(a=>a.id!==id);adding=false;useAcc(ACC[0]?ACC[0].id:"");toast(del?"Compte supprimé":"Déconnecté")}
 function askAge(){const a=cur();$("ageI").value=a.by?yr()-a.by:"";$("ageD").showModal()}
 $("ageNo").onclick=()=>$("ageD").close();
@@ -881,9 +881,9 @@ let FA=null,FD=null,fbUid="",fbT=0,fbMute=true,fbAt=0,fbOff=null;
 const fbOk=()=>fbUid&&!fbMute&&CUR==="f:"+fbUid;
 function fbPush(){if(!fbOk())return;clearTimeout(fbT);fbT=setTimeout(()=>{if(!fbOk())return;const a=cur(),u=FD.doc("users/"+fbUid);fbAt=Date.now();
   Promise.all([u.set({by:a.by||0,name:a.name||"",email:a.email||""},{merge:true}),
-    u.collection("bible").doc("data").set({hl:HL,notes:NOTES,links:LINKS,colors:CUST,at:fbAt})]).catch(()=>toast("Synchro en attente (hors ligne ?)"))},800)}
+    u.collection("bible").doc("data").set({hl:HL,notes:NOTES,ndates:NDATE,links:LINKS,colors:CUST,at:fbAt})]).catch(()=>toast("Synchro en attente (hors ligne ?)"))},800)}
 function fbApply(d,merge){fbMute=true;
-  for(const[o,k]of[[HL,"hl"],[NOTES,"notes"],[LINKS,"links"]]){const l={...o};for(const x in o)delete o[x];Object.assign(o,d[k]||{},merge?l:{});save("lsg."+k,o)}
+  for(const[o,k]of[[HL,"hl"],[NOTES,"notes"],[NDATE,"ndates"],[LINKS,"links"]]){const l={...o};for(const x in o)delete o[x];Object.assign(o,d[k]||{},merge?l:{});save("lsg."+k,o)}
   CUST=[...new Set([...(d.colors||[]),...(merge?CUST:[])])];save("lsg.colors",CUST);swatches();render();fbMute=false}
 async function fbIn(){if(!FA)return toast("Connexion indisponible (hors ligne ?)");if(location.protocol==="file:")return fbPair();const pr=new firebase.auth.GoogleAuthProvider();pr.setCustomParameters({prompt:"select_account"});
   try{await FA.signInWithPopup(pr)}catch(e){if(/popup-blocked|operation-not-supported/.test(e.code||""))FA.signInWithRedirect(pr);else if(!/cancelled|closed/.test(e.code||""))toast("Connexion refusée : "+(e.code||""))}}
@@ -914,7 +914,7 @@ async function fbUser(u){if(fbOff){fbOff();fbOff=null}fbMute=true;
   if(neu){a={id,p:"google",fb:1};ACC.push(a);
     // reprend les données locales : ancien compte Google du même e-mail, sinon données invité
     const old=ACC.find(x=>x!==a&&x.p==="google"&&x.email===u.email),src=old?"."+old.id:"";
-    try{for(const k of["hl","notes","colors","links"]){const v=localStorage.getItem("lsg."+k+src);if(v!==null)localStorage.setItem(`lsg.${k}.${id}`,v)}}catch(e){}
+    try{for(const k of["hl","notes","ndates","colors","links"]){const v=localStorage.getItem("lsg."+k+src);if(v!==null)localStorage.setItem(`lsg.${k}.${id}`,v)}}catch(e){}
     if(old){a.by=old.by;ACC=ACC.filter(x=>x!==old)}}
   Object.assign(a,{name:u.displayName||u.email||"Compte Google",email:u.email||"",pic:u.photoURL||""});
   fbUid=u.uid;useAcc(id);
