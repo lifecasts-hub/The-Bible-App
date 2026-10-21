@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.6";window.LC_BUILT=B;
+<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.7";window.LC_BUILT=B;
 function c(a,b){a=String(a).split(".");b=String(b).split(".");for(var i=0;i<Math.max(a.length,b.length);i++){var d=(+a[i]||0)-(+b[i]||0);if(d)return d>0?1:-1}return 0}window.LC_CMP=c;
 if(window.LC_OTA_VER){window.LC_VER=window.LC_OTA_VER;return}window.LC_VER=B;
 if(location.protocol!=="file:")return;
@@ -498,7 +498,7 @@ function setNote(t){const k=key(noteV),p=pv(noteV),ic=p.querySelector(".ni");t=t
   save("lsg.ndates",NDATE);save("lsg.notes",NOTES);$("note").close();sel=[];upSel()}
 $("aNote").onclick=()=>openNote(sel[0]);
 $("nOk").onclick=()=>setNote($("nV").value);
-$("nDel").onclick=()=>setNote("");
+$("nDel").onclick=()=>{if(confirm("Supprimer définitivement cette note ?"))setNote("")};
 $("nNo").onclick=()=>$("note").close();
 // Module 7 : liens entre passages (Relier). Liens par défaut = concordances Segond (éléments de type 3), analysées à la volée ;
 // liens perso dans lsg.links : { "GEN/1/1": ["JHN 1:1-3", "EXO 4:28-5:4", "PSA 23"] }.
