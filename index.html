@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.9";window.LC_BUILT=B;
+<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.10";window.LC_BUILT=B;
 function c(a,b){a=String(a).split(".");b=String(b).split(".");for(var i=0;i<Math.max(a.length,b.length);i++){var d=(+a[i]||0)-(+b[i]||0);if(d)return d>0?1:-1}return 0}window.LC_CMP=c;
 if(window.LC_OTA_VER){window.LC_VER=window.LC_OTA_VER;return}window.LC_VER=B;
 if(location.protocol!=="file:")return;
@@ -886,14 +886,15 @@ function fbPush(){if(!fbOk())return;clearTimeout(fbT);fbT=setTimeout(()=>{if(!fb
 function fbApply(d,merge){fbMute=true;
   for(const[o,k]of[[HL,"hl"],[NOTES,"notes"],[NDATE,"ndates"],[LINKS,"links"]]){const l={...o};for(const x in o)delete o[x];Object.assign(o,d[k]||{},merge?l:{});save("lsg."+k,o)}
   CUST=[...new Set([...(d.colors||[]),...(merge?CUST:[])])];save("lsg.colors",CUST);swatches();render();fbMute=false}
-async function fbIn(){if(!FA)return toast("Connexion indisponible (hors ligne ?)");if(location.protocol==="file:")return fbPair();const pr=new firebase.auth.GoogleAuthProvider();pr.setCustomParameters({prompt:"select_account"});
+async function fbIn(){if(!FA)return toast("Connexion indisponible : vérifiez Internet puis relancez l'application");if(location.protocol==="file:")return fbPair();const pr=new firebase.auth.GoogleAuthProvider();pr.setCustomParameters({prompt:"select_account"});
   try{await FA.signInWithPopup(pr)}catch(e){if(/popup-blocked|operation-not-supported/.test(e.code||""))FA.signInWithRedirect(pr);else if(!/cancelled|closed/.test(e.code||""))toast("Connexion refusée : "+(e.code||""))}}
 // App (file://) : la connexion Google se fait sur le site. Code d'appairage dans pairings/{code} ; le site y dépose le idToken Google, l'app fait signInWithCredential puis supprime le document.
 const PAIR_URL="https://lifecasts-hub.github.io/The-Bible-App/";let pairOff=null;
 async function fbPair(){try{const a=new Uint8Array(18);crypto.getRandomValues(a);const c=[...a].map(x=>x.toString(16).padStart(2,"0")).join("");
-  await FD.doc("pairings/"+c).set({at:Date.now()});localStorage.setItem("lc.pair",c);fbPairWait(c);
-  toast("Connectez-vous sur le site, puis revenez ici");location.href=PAIR_URL+"?pair="+c}
-  catch(e){toast("Connexion indisponible (hors ligne ?)")}}
+  toast("Ouverture de la connexion…");
+  await Promise.race([FD.doc("pairings/"+c).set({at:Date.now()}),new Promise(r=>setTimeout(r,6000))]);localStorage.setItem("lc.pair",c);fbPairWait(c);
+  location.href=PAIR_URL+"?pair="+c}
+  catch(e){toast("Connexion impossible : "+(e.code||e.message||"hors ligne ?"))}}
 function fbPairWait(c){if(pairOff)pairOff();const r=FD.doc("pairings/"+c),end=()=>{if(pairOff){pairOff();pairOff=null}localStorage.removeItem("lc.pair");r.delete().catch(()=>{})};
   pairOff=r.onSnapshot(async s=>{const d=s.data();if(!s.exists||(d&&Date.now()-d.at>15*6e4))return end();if(!d||!d.t)return;
     end();try{await FA.signInWithCredential(firebase.auth.GoogleAuthProvider.credential(d.t))}catch(e){toast("Connexion refusée : "+(e.code||""))}},()=>{})}
@@ -904,7 +905,7 @@ function pairSite(){const c=new URLSearchParams(location.search).get("pair");if(
   const show=(t,x,btn)=>{o.innerHTML=`<div style="background:#fff;color:#141413;border-radius:22px;padding:22px;width:min(92vw,420px)"><h3 style="margin:0 0 8px">${t}</h3><div style="opacity:.8">${x}</div>${btn?`<button style="${B}">${btn}</button>`:""}</div>`;return o.querySelector("button")};
   const go=async()=>{const pr=new firebase.auth.GoogleAuthProvider();pr.setCustomParameters({prompt:"select_account"});
     try{const r=await FA.signInWithPopup(pr),t=r.credential&&r.credential.idToken;if(!t)throw{code:"no-token"};
-      await FD.doc("pairings/"+c).update({t,uid:r.user.uid});history.replaceState(null,"",location.pathname);
+      for(let i=0;;i++){try{await FD.doc("pairings/"+c).update({t,uid:r.user.uid});break}catch(x){if(x.code!=="not-found"||i>=6)throw x;await new Promise(z=>setTimeout(z,2000))}}history.replaceState(null,"",location.pathname);
       show("C'est fait !","Votre compte est lié. Revenez dans l'application Bible LifeCasts.","Retour à l'application").onclick=()=>{location.href="lifecasts://bible"};
       setTimeout(()=>{location.href="lifecasts://bible"},800)}
     catch(e){show("Échec de la connexion",(e.code==="not-found"||e.code==="permission-denied")?"Ce lien a expiré. Relancez la connexion depuis l'application.":"Erreur : "+(e.code||"inconnue"),"Réessayer").onclick=go}};
