@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.11";window.LC_BUILT=B;
+<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.12";window.LC_BUILT=B;
 function c(a,b){a=String(a).split(".");b=String(b).split(".");for(var i=0;i<Math.max(a.length,b.length);i++){var d=(+a[i]||0)-(+b[i]||0);if(d)return d>0?1:-1}return 0}window.LC_CMP=c;
 if(window.LC_OTA_VER){window.LC_VER=window.LC_OTA_VER;return}window.LC_VER=B;
 if(location.protocol!=="file:")return;
@@ -827,6 +827,7 @@ const SV=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
 const goBtn=c=>`<button class="lcgo${c?" "+c:""}" data-p="google"><i class="lcm" aria-hidden="true"></i>Se connecter à LifeCasts</button>`;
 const provBtns=()=>goBtn("lcadd");
 let adding=false;
+function lcDz(host,on,txt){if(!host)return;let d=host.querySelector("#lcdz");if(!d){d=document.createElement("div");d.id="lcdz";const v=host.querySelector(".ver");v?v.before(d):host.appendChild(d)}d.hidden=!on;d.innerHTML=on?`<h3 style="font-size:13px;text-transform:uppercase;opacity:.6;font-weight:500;margin:24px 16px 6px">Zone de danger</h3><div class="card"><div class="srow"><span class="danger">Retirer ce compte de l'appareil<small>${txt}. Le compte LifeCasts n'est pas supprimé.</small></span><button class="ab danger" id="delB">Retirer</button></div></div>`:"";if(on)twice("delB",()=>signOut(true))}
 function drawAcct(){const a=cur();
   if(!a){$("acct").innerHTML=`<div class="lcin"><i class="lcm" aria-hidden="true"></i><b>Votre compte LifeCasts</b><p>Retrouvez vos surlignages et vos notes, sur le site et dans toutes les applications LifeCasts. (Aucun mot de passe à créer)</p>${goBtn()}</div>`+lcSetCard();lcSetBind();return}
   const age=a.by?yr()-a.by:0;
@@ -835,9 +836,9 @@ function drawAcct(){const a=cur();
     +`<button class="pb" id="addA" aria-expanded="${adding}"><i class="av o">${SV('<path d="M12 5v14M5 12h14"/>')}</i><span>Ajouter un compte</span></button>${adding?provBtns():""}</div>`
     +`<h3>Ce compte</h3><div class="card"><div class="srow"><span>Âge<small>${age?age+" an"+(age>1?"s":""):"Non renseigné"}</small></span><button class="ab" id="ageB">Modifier sur LifeCasts</button></div>`
     +`<div class="srow"><span>Se déconnecter<small>Les données du compte restent sur cet appareil</small></span><button class="ab" id="outB">Déconnexion</button></div>`
-    +`<div class="srow"><span class="danger">Supprimer le compte<small>Et ses surlignages et notes, sur cet appareil</small></span><button class="ab danger" id="delB">Supprimer</button></div></div>`;
+    +`</div>`;
   $("acct").insertAdjacentHTML("beforeend",lcSetCard());lcSetBind();
-  twice("delB",()=>signOut(true))}
+  lcDz($("set"),!!a,"Efface ses surlignages et notes sur cet appareil")}
 function useAcc(id){CUR=id;saveAcc();
   for(const k in HL)delete HL[k];for(const k in NOTES)delete NOTES[k];for(const k in NDATE)delete NDATE[k];for(const k in LINKS)delete LINKS[k];
   Object.assign(HL,load("lsg.hl"));Object.assign(NOTES,load("lsg.notes"));Object.assign(NDATE,load("lsg.ndates"));Object.assign(LINKS,load("lsg.links"));
@@ -852,7 +853,7 @@ function addAcc(a){const old=ACC.find(x=>x.id===a.id);
 function signOut(del){const id=CUR;if((cur()||{}).fb&&FA)FA.signOut();
   if((cur()||{}).site)try{localStorage.removeItem(SITE_KEY)}catch(e){}
   if(del)for(const k of["hl","notes","ndates","colors","links"])try{localStorage.removeItem(`lsg.${k}.${id}`)}catch(e){}
-  ACC=ACC.filter(a=>a.id!==id);adding=false;useAcc(ACC[0]?ACC[0].id:"");toast(del?"Compte supprimé":"Déconnecté")}
+  ACC=ACC.filter(a=>a.id!==id);adding=false;useAcc(ACC[0]?ACC[0].id:"");toast(del?"Compte retiré de l'appareil":"Déconnecté")}
 function askAge(){const a=cur();$("ageI").value=a.by?yr()-a.by:"";$("ageD").showModal()}
 $("ageNo").onclick=()=>$("ageD").close();
 $("ageF").onsubmit=()=>{const v=+$("ageI").value,a=cur();if(a){a.by=v?yr()-v:0;saveAcc();drawAcct()}};
