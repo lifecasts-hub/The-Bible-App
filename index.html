@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.12";window.LC_BUILT=B;
+<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.13";window.LC_BUILT=B;
 function c(a,b){a=String(a).split(".");b=String(b).split(".");for(var i=0;i<Math.max(a.length,b.length);i++){var d=(+a[i]||0)-(+b[i]||0);if(d)return d>0?1:-1}return 0}window.LC_CMP=c;
 if(window.LC_OTA_VER){window.LC_VER=window.LC_OTA_VER;return}window.LC_VER=B;
 if(location.protocol!=="file:")return;
@@ -152,6 +152,8 @@ p.flash{animation:fl 2s ease}
 @keyframes fl{0%,60%{background:var(--chip-on)}100%{background:none}}
 .ni{border:0;background:none;color:var(--muted);padding:0 0 0 6px;cursor:pointer;vertical-align:-3px}
 .ni svg{width:17px;height:17px}
+.lk{color:#ef4444;padding:0 0 0 6px;vertical-align:-3px;display:inline-block}.lk svg{width:15px;height:15px;fill:currentColor}
+#aLike.on{color:#ef4444}#aLike.on svg{fill:currentColor}
 body.selon .app{padding-bottom:200px}
 .act{position:fixed;left:0;right:0;bottom:0;padding:8px clamp(16px,5vw,32px) calc(10px + env(safe-area-inset-bottom,0px) * .3);display:flex;justify-content:center;pointer-events:none;z-index:6}
 .act>div{pointer-events:auto;width:100%;max-width:520px;background:var(--chip);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:12px 14px}
@@ -384,7 +386,7 @@ body.flow .txt p[data-v]{display:inline}body.flow .txt p[data-v]::after{content:
   <div class="top"><span id="aref"></span><button class="ab x" id="aX" aria-label="Désélectionner">✕</button></div>
   <div class="row">
     <div class="sw" id="sw"></div>
-    <div class="acts"><button class="ab" id="aCopy">Copier</button><button class="ab" id="aShare">Partager</button><button class="ab" id="aNote">Note</button><button class="ab i" id="aLink" aria-label="Relier à d'autres passages" title="Relier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4.5 4.5 0 0 0 6.400 0l3.300-3.300a4.500 4.500 0 0 0-6.400-6.400L12 5.600"/><path d="M14 10a4.500 4.500 0 0 0-6.400 0l-3.300 3.300a4.500 4.500 0 0 0 6.400 6.400L12 18.400"/></svg></button></div>
+    <div class="acts"><button class="ab" id="aCopy">Copier</button><button class="ab" id="aShare">Partager</button><button class="ab i" id="aLike" aria-label="Aimer ce passage" title="J'aime"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M12 20.5s-7.500-4.600-9.200-9.600C1.700 7.700 3.600 4.500 7 4.500c2 0 3.700 1.100 5 3 1.300-1.900 3-3 5-3 3.400 0 5.300 3.200 4.200 6.400-1.700 5-9.200 9.600-9.200 9.600z"/></svg></button><button class="ab" id="aNote">Note</button><button class="ab i" id="aLink" aria-label="Relier à d'autres passages" title="Relier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4.5 4.5 0 0 0 6.400 0l3.300-3.300a4.500 4.500 0 0 0-6.400-6.400L12 5.600"/><path d="M14 10a4.500 4.500 0 0 0-6.400 0l-3.300 3.300a4.500 4.500 0 0 0 6.400 6.400L12 18.400"/></svg></button></div>
   </div>
 </div></div>
 <dialog id="cpD" class="sheet"><h4>Nouvelle couleur</h4><div class="pvw" id="cpP"></div><label for="cpH">Teinte</label><input id="cpH" type="range" min="0" max="359" value="262"><label for="cpL">Luminosité</label><input id="cpL" type="range" min="30" max="80" value="60"><div class="acts"><button class="ab" id="cpNo">Annuler</button><button class="ab" id="cpOk">Ajouter</button></div></dialog>
@@ -438,12 +440,14 @@ const INAPP=/LifeCasts/i.test(navigator.userAgent)||navigator.standalone===true|
 // Surlignages, notes et couleurs sont rangés par compte : lsg.hl.<id>, etc. (sans suffixe = invité).
 let ACC=[],CUR="";try{ACC=JSON.parse(localStorage.getItem("lc.accounts"))||[];CUR=localStorage.getItem("lc.current")||""}catch(e){}
 if(!ACC.some(a=>a.id===CUR))CUR="";
-const NS=k=>CUR&&/^lsg\.(hl|notes|colors|links)$/.test(k)?k+"."+CUR:k;
+const NS=k=>CUR&&/^lsg\.(hl|likes|notes|colors|links)$/.test(k)?k+"."+CUR:k;
 const load=k=>{try{return JSON.parse(localStorage.getItem(NS(k)))||{}}catch(e){return{}}};
 const save=(k,o)=>{try{localStorage.setItem(NS(k),JSON.stringify(o))}catch(e){}fbPush()};
-const HL=load("lsg.hl"),NOTES=load("lsg.notes"),NDATE=load("lsg.ndates"),LINKS=load("lsg.links");
+const HL=load("lsg.hl"),LIKES=load("lsg.likes"),NOTES=load("lsg.notes"),NDATE=load("lsg.ndates"),LINKS=load("lsg.links");
 let sel=[],noteV=0;
 const key=v=>`${st.book}/${st.ch}/${v}`;
+const HEART='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 20.5s-7.500-4.600-9.200-9.600C1.700 7.700 3.600 4.500 7 4.500c2 0 3.700 1.100 5 3 1.300-1.900 3-3 5-3 3.400 0 5.300 3.200 4.200 6.400-1.700 5-9.200 9.600-9.200 9.600z"/></svg>';
+const LK=`<span class="lk" aria-label="Aimé">${HEART}</span>`;
 const NI=`<button class="ni" aria-label="Voir la note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 4h14v11l-5 5H5z"/><path d="M14 20v-5h5"/></svg></button>`;
 // Couleurs : 5 fixes (y g b p o) + couleurs perso illimitées (lsg.colors, valeurs "#rrggbb" stockées telles quelles dans lsg.hl).
 let CUST=[];try{CUST=JSON.parse(localStorage.getItem(NS("lsg.colors")))||[]}catch(e){}
@@ -456,7 +460,7 @@ function swatches(){$("sw").innerHTML=Object.keys(NAMES).map(h=>`<button data-h=
 function paint(h){for(const v of sel){const k=key(v),p=pv(v);
     if(h){HL[k]=h;p.dataset.h=h;h[0]==="#"?p.style.setProperty("--h",h+"73"):p.style.removeProperty("--h")}else{delete HL[k];delete p.dataset.h;p.style.removeProperty("--h")}}
   save("lsg.hl",HL);sel=[];upSel()}
-const vp=(x,v)=>{const k=key(v);return`<p data-v="${v}"${hs(HL[k])}><sup>${v}</sup><span class="vt">${esc(x)}</span>${NOTES[k]?NI:""}</p>`};
+const vp=(x,v)=>{const k=key(v);return`<p data-v="${v}"${hs(HL[k])}><sup>${v}</sup><span class="vt">${esc(x)}</span>${LIKES[k]?LK:""}${NOTES[k]?NI:""}</p>`};
 const pv=v=>document.querySelector(`.txt p[data-v="${v}"]`);
 const vtxt=v=>pv(v).querySelector(".vt").textContent;
 function ref(L){ // [16,17,18,20] -> "Jean 3:16-18, 20"
@@ -466,13 +470,18 @@ function upSel(){
   sel.sort((a,b)=>a-b);
   document.querySelectorAll(".txt p.sel").forEach(p=>p.classList.remove("sel"));
   sel.forEach(v=>pv(v)&&pv(v).classList.add("sel"));
-  const on=sel.length>0;$("act").hidden=!on;$("bar").hidden=on;document.body.classList.toggle("selon",on);
+  const on=sel.length>0;$("aLike").classList.toggle("on",on&&sel.every(v=>LIKES[key(v)]));$("act").hidden=!on;$("bar").hidden=on;document.body.classList.toggle("selon",on);
   if(on)$("aref").textContent=ref(sel)}
 function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;d.setAttribute("role","status");document.body.append(d);setTimeout(()=>d.remove(),1800)}
 function verseClick(e){const p=e.target.closest("p[data-v]");if(!p)return false;const v=+p.dataset.v;
   if(e.target.closest(".ni")){openNote(v);return true}
   if(String(getSelection()).length)return true; // sélection de texte native en cours
   const i=sel.indexOf(v);i<0?sel.push(v):sel.splice(i,1);upSel();return true}
+function likeSel(){const all=sel.every(v=>LIKES[key(v)]),now=Date.now();
+  for(const v of sel){const k=key(v),p=pv(v),ic=p.querySelector(".lk");
+    if(all){delete LIKES[k];if(ic)ic.remove()}else{if(!LIKES[k])LIKES[k]=now;if(!ic)p.querySelector(".vt").insertAdjacentHTML("afterend",LK)}}
+  save("lsg.likes",LIKES);toast(all?"Like retiré":"Aimé");sel=[];upSel()}
+$("aLike").onclick=likeSel;
 $("aX").onclick=()=>{sel=[];upSel()};
 let lp=0,lpDone=false;
 $("sw").onpointerdown=e=>{const b=e.target.closest('[data-h^="#"]');lpDone=false;if(!b)return;
@@ -788,19 +797,19 @@ function syncSet(){document.querySelectorAll("#set [data-k]").forEach(el=>{const
     if(el.classList.contains("seg"))el.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.val===String(v)));
     else if(el.type==="checkbox")el.checked=!!v;else el.value=v});
   $("sFs").textContent=SET.fs+" px";
-  const h=Object.keys(HL).length,n=Object.keys(NOTES).length,k=Object.values(LINKS).flat().length;$("sCnt").textContent=`${h} surlignage${h>1?"s":""} · ${n} note${n>1?"s":""} · ${k} lien${k>1?"s":""}`}
+  const h=Object.keys(HL).length,lk=Object.keys(LIKES).length,n=Object.keys(NOTES).length,k=Object.values(LINKS).flat().length;$("sCnt").textContent=`${h} surlignage${h>1?"s":""} · ${lk} like${lk>1?"s":""} · ${n} note${n>1?"s":""} · ${k} lien${k>1?"s":""}`}
 function saveSet(){save("lsg.set",SET);applySet();syncSet()}
 $("set").addEventListener("click",e=>{const b=e.target.closest(".seg button");if(b){SET[b.parentNode.dataset.k]=b.dataset.val;saveSet()}});
 $("set").addEventListener("input",e=>{const el=e.target,k=el.dataset.k;if(!k)return;SET[k]=el.type==="checkbox"?el.checked:el.type==="range"?+el.value:el.value;saveSet()});
-$("xExp").onclick=async()=>{const t=JSON.stringify({hl:HL,notes:NOTES,ndates:NDATE,links:LINKS,colors:CUST,set:SET});
+$("xExp").onclick=async()=>{const t=JSON.stringify({hl:HL,likes:LIKES,notes:NOTES,ndates:NDATE,links:LINKS,colors:CUST,set:SET});
   try{await navigator.clipboard.writeText(t);toast("Sauvegarde copiée")}catch(e){toast("Copie impossible")}};
 $("xImp").onclick=()=>$("xFile").click();
 $("xFile").onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());
-    Object.assign(HL,d.hl||{});Object.assign(NOTES,d.notes||{});Object.assign(NDATE,d.ndates||{});save("lsg.ndates",NDATE);Object.assign(LINKS,d.links||{});save("lsg.links",LINKS);for(const c of d.colors||[])if(!CUST.includes(c))CUST.push(c);
-    save("lsg.hl",HL);save("lsg.notes",NOTES);save("lsg.colors",CUST);swatches();syncSet();toast("Import réussi")}catch(x){toast("Fichier invalide")}e.target.value=""};
+    Object.assign(HL,d.hl||{});Object.assign(LIKES,d.likes||{});Object.assign(NOTES,d.notes||{});Object.assign(NDATE,d.ndates||{});save("lsg.ndates",NDATE);Object.assign(LINKS,d.links||{});save("lsg.links",LINKS);for(const c of d.colors||[])if(!CUST.includes(c))CUST.push(c);
+    save("lsg.hl",HL);save("lsg.likes",LIKES);save("lsg.notes",NOTES);save("lsg.colors",CUST);swatches();syncSet();toast("Import réussi")}catch(x){toast("Fichier invalide")}e.target.value=""};
 function twice(id,fn){let t=0;const b=$(id),l=b.textContent;b.onclick=()=>{if(t){clearTimeout(t);t=0;b.textContent=l;fn();return}
   b.textContent="Confirmer ?";t=setTimeout(()=>{t=0;b.textContent=l},3000)}}
-twice("xClr",()=>{for(const k in HL)delete HL[k];for(const k in NOTES)delete NOTES[k];for(const k in NDATE)delete NDATE[k];save("lsg.ndates",NDATE);for(const k in LINKS)delete LINKS[k];save("lsg.hl",HL);save("lsg.notes",NOTES);save("lsg.links",LINKS);syncSet();toast("Données effacées")});
+twice("xClr",()=>{for(const k in LIKES)delete LIKES[k];save("lsg.likes",LIKES);for(const k in HL)delete HL[k];for(const k in NOTES)delete NOTES[k];for(const k in NDATE)delete NDATE[k];save("lsg.ndates",NDATE);for(const k in LINKS)delete LINKS[k];save("lsg.hl",HL);save("lsg.notes",NOTES);save("lsg.links",LINKS);syncSet();toast("Données effacées")});
 twice("xRst",()=>{Object.assign(SET,DEF);saveSet();toast("Réglages réinitialisés")});
 // Module 6b : connexion. Renseigner AUTH avec les identifiants client de chaque fournisseur ; la page doit être servie
 // en https sur un domaine déclaré chez eux comme URI de redirection (AUTH.redirect, vide = adresse de la page).
@@ -840,6 +849,7 @@ function drawAcct(){const a=cur();
   $("acct").insertAdjacentHTML("beforeend",lcSetCard());lcSetBind();
   lcDz($("set"),!!a,"Efface ses surlignages et notes sur cet appareil")}
 function useAcc(id){CUR=id;saveAcc();
+  for(const k in LIKES)delete LIKES[k];Object.assign(LIKES,load("lsg.likes"));
   for(const k in HL)delete HL[k];for(const k in NOTES)delete NOTES[k];for(const k in NDATE)delete NDATE[k];for(const k in LINKS)delete LINKS[k];
   Object.assign(HL,load("lsg.hl"));Object.assign(NOTES,load("lsg.notes"));Object.assign(NDATE,load("lsg.ndates"));Object.assign(LINKS,load("lsg.links"));
   const c=load("lsg.colors");CUST=Array.isArray(c)?c:[];swatches();sel=[];upSel();render()}
@@ -847,12 +857,12 @@ function addAcc(a){const old=ACC.find(x=>x.id===a.id);
   if(old)Object.assign(old,{name:a.name||old.name,email:a.email||old.email,pic:a.pic||old.pic});
   else{a.name=a.name||a.email||"Compte "+PV[a.p];ACC.push(a);
     // premier passage de ce compte sur l'appareil : il reprend les données saisies en invité
-    try{if(localStorage.getItem("lsg.hl."+a.id)===null&&localStorage.getItem("lsg.notes."+a.id)===null)for(const k of["hl","notes","ndates","colors","links"]){
+    try{if(localStorage.getItem("lsg.hl."+a.id)===null&&localStorage.getItem("lsg.notes."+a.id)===null)for(const k of["hl","likes","notes","ndates","colors","links"]){
       const v=localStorage.getItem("lsg."+k);if(v!==null){localStorage.setItem(`lsg.${k}.${a.id}`,v);localStorage.removeItem("lsg."+k)}}}catch(e){}}
   adding=false;useAcc(a.id);toast("Connecté : "+cur().name)}
 function signOut(del){const id=CUR;if((cur()||{}).fb&&FA)FA.signOut();
   if((cur()||{}).site)try{localStorage.removeItem(SITE_KEY)}catch(e){}
-  if(del)for(const k of["hl","notes","ndates","colors","links"])try{localStorage.removeItem(`lsg.${k}.${id}`)}catch(e){}
+  if(del)for(const k of["hl","likes","notes","ndates","colors","links"])try{localStorage.removeItem(`lsg.${k}.${id}`)}catch(e){}
   ACC=ACC.filter(a=>a.id!==id);adding=false;useAcc(ACC[0]?ACC[0].id:"");toast(del?"Compte retiré de l'appareil":"Déconnecté")}
 function askAge(){const a=cur();$("ageI").value=a.by?yr()-a.by:"";$("ageD").showModal()}
 $("ageNo").onclick=()=>$("ageD").close();
@@ -906,9 +916,9 @@ let FA=null,FD=null,fbUid="",fbT=0,fbMute=true,fbAt=0,fbOff=null;
 const fbOk=()=>fbUid&&!fbMute&&CUR==="f:"+fbUid;
 function fbPush(){if(!fbOk())return;clearTimeout(fbT);fbT=setTimeout(()=>{if(!fbOk())return;const a=cur(),u=FD.doc("users/"+fbUid);fbAt=Date.now();
   Promise.all([u.set({name:a.name||"",email:a.email||""},{merge:true}),
-    u.collection("bible").doc("data").set({hl:HL,notes:NOTES,ndates:NDATE,links:LINKS,colors:CUST,at:fbAt})]).catch(()=>toast("Synchro en attente (hors ligne ?)"))},800)}
+    u.collection("bible").doc("data").set({hl:HL,likes:LIKES,notes:NOTES,ndates:NDATE,links:LINKS,colors:CUST,at:fbAt})]).catch(()=>toast("Synchro en attente (hors ligne ?)"))},800)}
 function fbApply(d,merge){fbMute=true;
-  for(const[o,k]of[[HL,"hl"],[NOTES,"notes"],[NDATE,"ndates"],[LINKS,"links"]]){const l={...o};for(const x in o)delete o[x];Object.assign(o,d[k]||{},merge?l:{});save("lsg."+k,o)}
+  for(const[o,k]of[[HL,"hl"],[LIKES,"likes"],[NOTES,"notes"],[NDATE,"ndates"],[LINKS,"links"]]){const l={...o};for(const x in o)delete o[x];Object.assign(o,d[k]||{},merge?l:{});save("lsg."+k,o)}
   CUST=[...new Set([...(d.colors||[]),...(merge?CUST:[])])];save("lsg.colors",CUST);swatches();render();fbMute=false}
 async function fbIn(){if(!FA)return toast("Connexion indisponible : vérifiez Internet puis relancez l'application");if(location.protocol==="file:")return fbPair();const pr=new firebase.auth.GoogleAuthProvider();pr.setCustomParameters({prompt:"select_account"});
   try{await FA.signInWithPopup(pr)}catch(e){if(/popup-blocked|operation-not-supported/.test(e.code||""))FA.signInWithRedirect(pr);else if(!/cancelled|closed/.test(e.code||""))toast("Connexion refusée : "+(e.code||""))}}
@@ -940,7 +950,7 @@ async function fbUser(u){if(fbOff){fbOff();fbOff=null}fbMute=true;
   if(neu){a={id,p:"google",fb:1};ACC.push(a);
     // reprend les données locales : ancien compte Google du même e-mail, sinon données invité
     const old=ACC.find(x=>x!==a&&x.p==="google"&&x.email===u.email),src=old?"."+old.id:"";
-    try{for(const k of["hl","notes","ndates","colors","links"]){const v=localStorage.getItem("lsg."+k+src);if(v!==null)localStorage.setItem(`lsg.${k}.${id}`,v)}}catch(e){}
+    try{for(const k of["hl","likes","notes","ndates","colors","links"]){const v=localStorage.getItem("lsg."+k+src);if(v!==null)localStorage.setItem(`lsg.${k}.${id}`,v)}}catch(e){}
     if(old){a.by=old.by;ACC=ACC.filter(x=>x!==old)}}
   Object.assign(a,{name:u.displayName||u.email||"Compte Google",email:u.email||"",pic:u.photoURL||""});
   fbUid=u.uid;useAcc(id);
