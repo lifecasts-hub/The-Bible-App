@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.15";window.LC_BUILT=B;
+<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.16";window.LC_BUILT=B;
 function c(a,b){a=String(a).split(".");b=String(b).split(".");for(var i=0;i<Math.max(a.length,b.length);i++){var d=(+a[i]||0)-(+b[i]||0);if(d)return d>0?1:-1}return 0}window.LC_CMP=c;
 if(window.LC_OTA_VER){window.LC_VER=window.LC_OTA_VER;return}window.LC_VER=B;
 if(location.protocol!=="file:")return;
@@ -152,7 +152,7 @@ p.flash{animation:fl 2s ease}
 @keyframes fl{0%,60%{background:var(--chip-on)}100%{background:none}}
 .ni{border:0;background:none;color:var(--muted);padding:0 0 0 6px;cursor:pointer;vertical-align:-3px}
 .ni svg{width:17px;height:17px}
-.lk{color:#ef4444;padding:0 0 0 3px;vertical-align:.5em;line-height:0;display:inline-block;opacity:.9}.lk svg{width:12px;height:12px;fill:none;stroke-width:2.4}
+.lk{color:#ef4444;padding:0 0 0 3px;vertical-align:.5em;line-height:0;display:inline-block;opacity:.9}@keyframes lkPop{0%{transform:scale(0) rotate(-20deg);opacity:0}55%{transform:scale(1.9) rotate(8deg);opacity:1}100%{transform:scale(1) rotate(0)}}.lk.pop svg{animation:lkPop .5s cubic-bezier(.2,.9,.3,1.3);transform-origin:center}.lk svg{width:10px;height:10px;fill:none;stroke-width:2.4}
 #aLike.on{color:#ef4444}#aLike.on svg{fill:currentColor}
 body.selon .app{padding-bottom:200px}
 .act{position:fixed;left:0;right:0;bottom:0;padding:8px clamp(16px,5vw,32px) calc(10px + env(safe-area-inset-bottom,0px) * .3);display:flex;justify-content:center;pointer-events:none;z-index:6}
@@ -466,7 +466,16 @@ const vtxt=v=>pv(v).querySelector(".vt").textContent;
 function ref(L){ // [16,17,18,20] -> "Jean 3:16-18, 20"
   const o=[];for(let i=0;i<L.length;i++){let j=i;while(L[j+1]===L[j]+1)j++;o.push(j>i?`${L[i]}-${L[j]}`:L[i]);i=j}
   return`${byCode(st.book).name} ${st.ch}:${o.join(", ")}`}
+// Sélection native (appui long sur le texte) : les passages touchés deviennent la sélection, donc surbrillance/copier/partager/etc. fonctionnent.
+let natOn=false,natT=0;
+document.addEventListener("selectionchange",()=>{clearTimeout(natT);natT=setTimeout(()=>{
+  const g=getSelection(),txt=g&&g.rangeCount&&!g.isCollapsed?String(g).trim():"";
+  if(!txt){if(natOn){natOn=false;sel=[];upSel()}return}
+  const r=g.getRangeAt(0),L=[...document.querySelectorAll(".txt p[data-v]")].filter(p=>r.intersectsNode(p)).map(p=>+p.dataset.v);
+  if(!L.length){if(natOn){natOn=false;sel=[];upSel()}return}
+  natOn=true;if(L.join()!==sel.join()){sel=L;upSel()}},220)});
 function upSel(){
+  if(!sel.length&&natOn){natOn=false;try{getSelection().removeAllRanges()}catch(e){}}
   sel.sort((a,b)=>a-b);
   document.querySelectorAll(".txt p.sel").forEach(p=>p.classList.remove("sel"));
   sel.forEach(v=>pv(v)&&pv(v).classList.add("sel"));
@@ -484,7 +493,7 @@ function verseClick(e){const p=e.target.closest("p[data-v]");if(!p)return false;
 function likeSel(){likeVerses(sel.slice())}
 function likeVerses(L){const all=L.every(v=>LIKES[key(v)]),now=Date.now();
   for(const v of L){const k=key(v),p=pv(v),ic=p.querySelector(".lk");
-    if(all){delete LIKES[k];if(ic)ic.remove()}else{if(!LIKES[k])LIKES[k]=now;if(!ic)p.querySelector(".vt").insertAdjacentHTML("afterend",LK)}}
+    if(all){delete LIKES[k];if(ic)ic.remove()}else{if(!LIKES[k])LIKES[k]=now;if(!ic)p.querySelector(".vt").insertAdjacentHTML("afterend",LK.replace('class="lk"','class="lk pop"'))}}
   save("lsg.likes",LIKES);toast(all?"Like retiré":"Aimé");sel=sel.filter(x=>!L.includes(x));upSel()}
 $("aLike").onclick=likeSel;
 $("aX").onclick=()=>{sel=[];upSel()};
