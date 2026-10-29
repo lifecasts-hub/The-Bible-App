@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.14";window.LC_BUILT=B;
+<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.15";window.LC_BUILT=B;
 function c(a,b){a=String(a).split(".");b=String(b).split(".");for(var i=0;i<Math.max(a.length,b.length);i++){var d=(+a[i]||0)-(+b[i]||0);if(d)return d>0?1:-1}return 0}window.LC_CMP=c;
 if(window.LC_OTA_VER){window.LC_VER=window.LC_OTA_VER;return}window.LC_VER=B;
 if(location.protocol!=="file:")return;
@@ -152,7 +152,7 @@ p.flash{animation:fl 2s ease}
 @keyframes fl{0%,60%{background:var(--chip-on)}100%{background:none}}
 .ni{border:0;background:none;color:var(--muted);padding:0 0 0 6px;cursor:pointer;vertical-align:-3px}
 .ni svg{width:17px;height:17px}
-.lk{color:#ef4444;padding:0 0 0 6px;vertical-align:-3px;display:inline-block}.lk svg{width:15px;height:15px;fill:currentColor}
+.lk{color:#ef4444;padding:0 0 0 3px;vertical-align:.5em;line-height:0;display:inline-block;opacity:.9}.lk svg{width:12px;height:12px;fill:none;stroke-width:2.4}
 #aLike.on{color:#ef4444}#aLike.on svg{fill:currentColor}
 body.selon .app{padding-bottom:200px}
 .act{position:fixed;left:0;right:0;bottom:0;padding:8px clamp(16px,5vw,32px) calc(10px + env(safe-area-inset-bottom,0px) * .3);display:flex;justify-content:center;pointer-events:none;z-index:6}
@@ -473,14 +473,19 @@ function upSel(){
   const on=sel.length>0;$("aLike").classList.toggle("on",on&&sel.every(v=>LIKES[key(v)]));$("act").hidden=!on;$("bar").hidden=on;document.body.classList.toggle("selon",on);
   if(on)$("aref").textContent=ref(sel)}
 function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;d.setAttribute("role","status");document.body.append(d);setTimeout(()=>d.remove(),1800)}
+let dtV=0,dtT=0,dtP=[];
 function verseClick(e){const p=e.target.closest("p[data-v]");if(!p)return false;const v=+p.dataset.v;
   if(e.target.closest(".ni")){openNote(v);return true}
+  const nw=Date.now();
+  if(dtV===v&&nw-dtT<350){dtV=0;sel=dtP.slice();try{getSelection().removeAllRanges()}catch(x){}likeVerses([v]);return true} // double tape : J'aime
+  dtV=v;dtT=nw;dtP=sel.slice();
   if(String(getSelection()).length)return true; // sélection de texte native en cours
   const i=sel.indexOf(v);i<0?sel.push(v):sel.splice(i,1);upSel();return true}
-function likeSel(){const all=sel.every(v=>LIKES[key(v)]),now=Date.now();
-  for(const v of sel){const k=key(v),p=pv(v),ic=p.querySelector(".lk");
+function likeSel(){likeVerses(sel.slice())}
+function likeVerses(L){const all=L.every(v=>LIKES[key(v)]),now=Date.now();
+  for(const v of L){const k=key(v),p=pv(v),ic=p.querySelector(".lk");
     if(all){delete LIKES[k];if(ic)ic.remove()}else{if(!LIKES[k])LIKES[k]=now;if(!ic)p.querySelector(".vt").insertAdjacentHTML("afterend",LK)}}
-  save("lsg.likes",LIKES);toast(all?"Like retiré":"Aimé");sel=[];upSel()}
+  save("lsg.likes",LIKES);toast(all?"Like retiré":"Aimé");sel=sel.filter(x=>!L.includes(x));upSel()}
 $("aLike").onclick=likeSel;
 $("aX").onclick=()=>{sel=[];upSel()};
 let lp=0,lpDone=false;
