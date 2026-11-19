@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.22";window.LC_BUILT=B;
+<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.23";window.LC_BUILT=B;
 function c(a,b){a=String(a).split(".");b=String(b).split(".");for(var i=0;i<Math.max(a.length,b.length);i++){var d=(+a[i]||0)-(+b[i]||0);if(d)return d>0?1:-1}return 0}window.LC_CMP=c;
 if(window.LC_OTA_VER){window.LC_VER=window.LC_OTA_VER;return}window.LC_VER=B;
 if(location.protocol!=="file:")return;
@@ -36,7 +36,7 @@ function lcSub(node,desc,host,cls,onClose){host=host||node.parentNode;var mark=d
  host.appendChild(W);node.hidden=false;W.appendChild(node);W.scrollTop=0;requestAnimationFrame(function(){requestAnimationFrame(function(){W.classList.add("on")})});
  W.querySelector(".lcbk").onclick=function(){W.classList.remove("on");setTimeout(function(){node.hidden=wasH;mark.parentNode?mark.replaceWith(node):0;W.remove();onClose&&onClose()},300)};return W}
 </script>
-</head><body><div id="cbar" hidden><input id="cin" type="search" placeholder="Rechercher dans ce chapitre" autocomplete="off"><div class="cr"><button id="cmore" hidden>Plus de recherche</button><i></i><button id="cmic" aria-label="Dictée"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.500 11a6.500 6.500 0 0013 0M12 17.500V21"/></svg></button><button id="cok" aria-label="Masquer le clavier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="11" rx="2.500"/><path d="M6 7h.01M10 7h.01M14 7h.01M18 7h.01M7.500 10.500h9"/><path d="M9 18l3 3 3-3"/></svg></button></div></div>
+</head><body><div id="cbar" hidden><input id="cin" type="search" placeholder="Rechercher dans ce chapitre" autocomplete="off"><div class="cr"><button id="cmore">Plus de recherche</button><i></i><button id="cmic" aria-label="Dictée"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.500 11a6.500 6.500 0 0013 0M12 17.500V21"/></svg></button><button id="cok" aria-label="Masquer le clavier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="11" rx="2.500"/><path d="M6 7h.01M10 7h.01M14 7h.01M18 7h.01M7.500 10.500h9"/><path d="M9 18l3 3 3-3"/></svg></button></div></div>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" media="print" onload="this.media=\'all\'">
 <style>
 /* Layout : une colonne type app iOS — grand titre serif, liste à filets, barre flottante en bas (pilule + loupe). */
@@ -294,7 +294,7 @@ body.rd header{position:sticky;top:0;z-index:30;background:var(--bg);flex-wrap:w
 #cbar{position:fixed;left:8px;right:8px;bottom:calc(var(--kb,0px) + var(--lckb-h,0px) + 10px);z-index:40;background:var(--d-bg);border:1px solid var(--edge,var(--line));border-radius:28px;padding:12px 12px 10px 18px;box-shadow:var(--shadow-hi)}#cbar[hidden]{display:none}
 #cin{width:100%;height:40px;border:0;background:none;color:var(--fg);font:18px var(--sans);outline:0;padding:0}
 .cr{display:flex;align-items:center;gap:8px;margin-top:4px}.cr i{flex:1}
-#cmore{height:46px;border:0;border-radius:23px;padding:0 18px;background:var(--chip-on);color:var(--fg);font:500 16px var(--sans);cursor:pointer;white-space:nowrap}#cmore[hidden]{display:none}
+#cmore{height:46px;flex:none;border:0;border-radius:23px;padding:0 18px;background:var(--chip-on);color:var(--fg);font:500 16px var(--sans);cursor:pointer;white-space:nowrap}
 #cok,#cmic{width:46px;height:46px;border:0;border-radius:50%;background:var(--chip-on);color:var(--fg);display:grid;place-items:center;cursor:pointer;flex:none}#cok{background:var(--fg);color:var(--bg)}#cok svg,#cmic svg{width:22px;height:22px}#cmic[hidden]{display:none}
 body.cso #bar,body.cso #tabs{display:none}
 mark.cs{background:rgba(242,181,68,.5);color:inherit;border-radius:3px}
@@ -755,7 +755,7 @@ var cq="";
 const cn=c=>c.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
 function csApply(v){const A=document.querySelector(".txt");if(!A)return;
   A.querySelectorAll("mark.cs").forEach(m=>m.replaceWith(document.createTextNode(m.textContent)));A.normalize();
-  const q=cn(cq).trim();let n=0,first=null;$("cmore").hidden=!q;
+  const q=cn(cq).trim();let n=0,first=null;
   if(q){const w=document.createTreeWalker(A,NodeFilter.SHOW_TEXT),T=[];while(w.nextNode())T.push(w.currentNode);
     for(const t of T){const s=t.nodeValue;let z="",map=[];for(let i=0;i<s.length;i++){const c=cn(s[i]);for(let j=0;j<c.length;j++){z+=c[j];map.push(i)}}
       const H=[];let k=z.indexOf(q);while(k>=0){H.push([map[k],map[k+q.length-1]+1]);k=z.indexOf(q,k+q.length)}
