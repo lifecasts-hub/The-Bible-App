@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.18";window.LC_BUILT=B;
+<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.19";window.LC_BUILT=B;
 function c(a,b){a=String(a).split(".");b=String(b).split(".");for(var i=0;i<Math.max(a.length,b.length);i++){var d=(+a[i]||0)-(+b[i]||0);if(d)return d>0?1:-1}return 0}window.LC_CMP=c;
 if(window.LC_OTA_VER){window.LC_VER=window.LC_OTA_VER;return}window.LC_VER=B;
 if(location.protocol!=="file:")return;
@@ -291,9 +291,12 @@ body.flow .txt p[data-v]{display:inline}body.flow .txt p[data-v]::after{content:
 .sheet form .acts{margin-top:16px;justify-content:flex-end}.act .acts{flex:0 1 auto;min-width:0;max-width:100%;flex-wrap:wrap;justify-content:flex-end;margin-top:0}@media(max-width:430px){.act .acts{flex:1 1 100%;gap:6px}.act .acts .ab{flex:1 1 auto;padding:9px 7px;min-width:0;white-space:nowrap;font-size:13.5px}.act .acts .ab.i{flex:0 0 auto;padding:8px 9px}}
 .sheet p{color:var(--muted);font-size:14px;line-height:1.45;margin:8px 0 0}
 body.rd header{position:sticky;top:0;z-index:30;background:var(--bg);flex-wrap:wrap;margin:-20px calc(-1*clamp(16px,5vw,32px)) 0;padding:14px clamp(16px,5vw,32px) 10px}
-#cbar{flex:0 0 100%;display:flex;gap:8px;align-items:center}#cbar[hidden]{display:none}
-#cin{flex:1;min-width:0;height:44px;border:1px solid var(--line);border-radius:14px;background:var(--chip);color:var(--fg);font:16px var(--sans);padding:0 14px}
-#cmore{flex:none;height:44px;border:0;border-radius:14px;padding:0 14px;background:var(--fg);color:var(--bg);font:600 14px var(--sans);cursor:pointer;white-space:nowrap}
+#cbar{position:fixed;left:8px;right:8px;bottom:calc(var(--kb,0px) + 8px);z-index:40;background:var(--d-bg);border:1px solid var(--edge,var(--line));border-radius:28px;padding:12px 12px 10px 18px;box-shadow:var(--shadow-hi)}#cbar[hidden]{display:none}
+#cin{width:100%;height:44px;border:0;background:none;color:var(--fg);font:18px var(--sans);outline:0;padding:0}
+.cr{display:flex;align-items:center;gap:8px;margin-top:4px}.cr i{flex:1}
+#cmore{height:46px;border:0;border-radius:23px;padding:0 18px;background:var(--chip-on);color:var(--fg);font:500 16px var(--sans);cursor:pointer;white-space:nowrap}#cmore[hidden]{display:none}
+#cok{width:46px;height:46px;border:0;border-radius:50%;background:var(--fg);color:var(--bg);display:grid;place-items:center;cursor:pointer;flex:none}#cok svg{width:22px;height:22px}
+body.cso #bar,body.cso #tabs{display:none}
 mark.cs{background:rgba(242,181,68,.5);color:inherit;border-radius:3px}
 </style>
 
@@ -307,7 +310,6 @@ mark.cs{background:rgba(242,181,68,.5);color:inherit;border-radius:3px}
     <button class="tool v" id="ver" aria-haspopup="dialog" aria-label="Changer de version"></button>
     <button class="tool x" id="gear" aria-label="Réglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.6"/><circle cx="8" cy="17" r="2.6"/></svg></button>
     </div>
-  <div id="cbar" hidden><input id="cin" type="search" placeholder="Rechercher dans ce chapitre" autocomplete="off"><button id="cmore" hidden>Plus de recherche</button></div>
   </header>
   <p class="state" id="state"></p>
   <input id="dq" type="search" placeholder="Mot, expression ou référence (Jean 3:16)" autocomplete="off" hidden>
@@ -697,7 +699,7 @@ function render(){
   $("h1").textContent=dig?"Fouille":!lib?(st.view==="set"?"Réglages":"Compte"):b?(st.ch?`${b.name} ${st.ch}`:b.name):"Bibliothèque";
   $("back").hidden=!b&&!dig&&st.view!=="set";
   for(const id of["sort","find","rr"])$(id).hidden=!lib||!!b||dig;$("bar").hidden=st.view==="set"||sel.length>0;
-  $("state").hidden=$("list").hidden=!lib;$("cs").hidden=!(b&&st.ch);if(!(b&&st.ch)){$("cbar").hidden=true;cq=""}$("acct").hidden=st.view!=="acct";$("set").hidden=st.view!=="set";if(st.view==="set")syncSet();if(st.view==="acct")drawAcct();
+  $("state").hidden=$("list").hidden=!lib;$("cs").hidden=!(b&&st.ch);if(!(b&&st.ch)){$("cbar").hidden=true;cq="";document.body.classList.remove("cso")}$("acct").hidden=st.view!=="acct";$("set").hidden=st.view!=="set";if(st.view==="set")syncSet();if(st.view==="acct")drawAcct();
   if(!lib)return;
   if(dig){const r=search(st.dq||"");
     $("state").textContent="Louis Segond · recherche dans tout le texte";
@@ -760,9 +762,10 @@ function csApply(v){const A=document.querySelector(".txt");if(!A)return;
       for(let h=H.length-1;h>=0;h--){const r=document.createRange();r.setStart(t,H[h][0]);r.setEnd(t,H[h][1]);const m=document.createElement("mark");m.className="cs";r.surroundContents(m);first=m;n++}}
     const f=A.querySelector("mark.cs");if(f)f.scrollIntoView({block:"center",behavior:"smooth"})}
   $("state").textContent=q?`${n} résultat${n>1?"s":""} dans ce chapitre`:`Louis Segond · ${v} versets`}
-$("cs").onclick=()=>{const b=$("cbar");b.hidden=!b.hidden;if(b.hidden){cq="";$("cin").value="";render()}else $("cin").focus()};
+$("cs").onclick=()=>{const b=$("cbar");b.hidden=!b.hidden;document.body.classList.toggle("cso",!b.hidden);if(b.hidden){cq="";$("cin").value="";render()}else $("cin").focus()};
 $("cin").oninput=e=>{cq=e.target.value;csApply(document.querySelectorAll(".txt p[data-v]").length)};
-$("cmore").onclick=()=>openDig(cq);
+$("cmore").onclick=()=>openDig(cq);$("cok").onclick=()=>$("cin").blur();
+if(window.visualViewport){const vv=visualViewport,kb=()=>document.documentElement.style.setProperty("--kb",Math.max(0,innerHeight-vv.height-vv.offsetTop)+"px");vv.addEventListener("resize",kb);vv.addEventListener("scroll",kb)}
 function openDig(q){go(null,0);st.dig=true;st.dq=$("dq").value=q||"";render();if(!q)$("dq").focus()}
 $("dig").onclick=()=>openDig("");
 let qt=0;$("dq").oninput=e=>{clearTimeout(qt);qt=setTimeout(()=>{st.dq=e.target.value;lim=100;render()},220)};
@@ -1057,4 +1060,5 @@ try{L.removeItem("lc.ota.try")}catch(e){}setTimeout(check,3000);window.addEventL
 document.addEventListener("visibilitychange",function(){if(!document.hidden&&Date.now()-last>36e5)check()});
 })()</script>
 <script>if("serviceWorker"in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(function(){});</script>
+<div id="cbar" hidden><input id="cin" type="search" placeholder="Rechercher dans ce chapitre" autocomplete="off"><div class="cr"><button id="cmore" hidden>Plus de recherche</button><i></i><button id="cok" aria-label="Masquer le clavier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.500 4.500L19 7.500"/></svg></button></div></div>
 </body></html>
