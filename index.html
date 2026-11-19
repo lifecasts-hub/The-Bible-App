@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.23";window.LC_BUILT=B;
+<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.24";window.LC_BUILT=B;
 function c(a,b){a=String(a).split(".");b=String(b).split(".");for(var i=0;i<Math.max(a.length,b.length);i++){var d=(+a[i]||0)-(+b[i]||0);if(d)return d>0?1:-1}return 0}window.LC_CMP=c;
 if(window.LC_OTA_VER){window.LC_VER=window.LC_OTA_VER;return}window.LC_VER=B;
 if(location.protocol!=="file:")return;
@@ -1094,6 +1094,7 @@ const IC={
 const CSS=`#lckb{position:fixed;left:0;right:0;bottom:0;z-index:2147483647;display:none;box-sizing:border-box;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));background:var(--lckb-bg);color:var(--lckb-tx);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);border-top:1px solid var(--lckb-ln);font:500 20px/1 -apple-system,BlinkMacSystemFont,Inter,Roboto,sans-serif;user-select:none;-webkit-user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent;max-width:900px;margin:0 auto}
 #lckb,#lckb *{box-sizing:border-box}
 #lckb.open{display:block}
+#lckb,#lckb *{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 #lckb{--lckb-bg:rgba(28,25,21,.94);--lckb-k:#2f2a23;--lckb-f:#1f1b16;--lckb-tx:#f5efe6;--lckb-ln:rgba(255,255,255,.08);--lckb-ac:#F2B544;--lckb-act:#100e0b}
 @media(prefers-color-scheme:light){html:not([data-theme="dark"]) #lckb{--lckb-bg:rgba(236,232,225,.95);--lckb-k:#fff;--lckb-f:#cfc9bf;--lckb-tx:#141413;--lckb-ln:rgba(0,0,0,.08);--lckb-ac:#B7790A;--lckb-act:#fff}}
 html[data-theme="light"] #lckb{--lckb-bg:rgba(236,232,225,.95);--lckb-k:#fff;--lckb-f:#cfc9bf;--lckb-tx:#141413;--lckb-ln:rgba(0,0,0,.08);--lckb-ac:#B7790A;--lckb-act:#fff}
@@ -1129,8 +1130,8 @@ html[data-theme="light"] #lckb{--lckb-bg:#d3d5db;--lckb-k:#fff;--lckb-f:#fff;--l
 #lckb .k{height:43px;border-radius:10px;box-shadow:none;font-size:26px}
 #lckb .k.f,#lckb .k.sp{font-size:20px}
 #lckb .k.sp{position:relative}#lckb .lg{position:absolute;right:8px;bottom:5px;font:400 13px/1 sans-serif;letter-spacing:-.02em;opacity:.55;text-transform:uppercase}#lckb .lg b{font-weight:400;opacity:1}
-#lckb .sg{display:flex;height:44px;align-items:center;margin:4px 0 0}
-#lckb .sg button{flex:1 1 0;width:33.33%;border-radius:0;text-align:center;height:30px;border:0;background:none;color:inherit;font:400 20px/1 inherit;opacity:.75;border-left:1px solid rgba(127,127,127,.5);padding:0 6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}#lckb .sg button:first-child{border-left:0}
+#lckb .sg{display:flex;height:34px;align-items:center;margin:2px 0 0}
+#lckb .sg button{flex:1 1 0;width:33.33%;border-radius:0;text-align:center;height:24px;border:0;background:none;color:inherit;font:500 15px/1 inherit;opacity:.8;border-left:1px solid rgba(127,127,127,.5);padding:0 6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}#lckb .sg button:first-child{border-left:0}
 #lckb .bt{display:flex;justify-content:space-between;align-items:center;height:48px;padding:6px 22px 0}#lckb .bt .g{border:0;background:none;color:inherit;padding:4px;width:44px;height:44px;display:grid;place-items:center}#lckb .bt svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 #lckb .k.on{background:var(--lckb-k);color:var(--lckb-tx)}#lckb .k.f.on{background:var(--lckb-tx);color:var(--lckb-bg)}`;
 const coarse=(()=>{try{return matchMedia("(pointer:coarse)").matches}catch(e){return false}})();
@@ -1221,7 +1222,7 @@ function init(){
  window.addEventListener("resize",hp);watch();
  document.querySelectorAll("input,textarea,[contenteditable]").forEach(e=>elig(e)&&prep(e));
 }
-window.LCKB={version:"1.1",mic,enabled:()=>on,setEnabled(b){on=!!b;LS("lckb.on",on?"1":"0");if(!on){unprep();hide()}else document.querySelectorAll("input,textarea,[contenteditable]").forEach(e=>elig(e)&&prep(e))},
+window.LCKB={version:"1.2",mic,enabled:()=>on,setEnabled(b){on=!!b;LS("lckb.on",on?"1":"0");if(!on){unprep();hide()}else document.querySelectorAll("input,textarea,[contenteditable]").forEach(e=>elig(e)&&prep(e))},
  lang:()=>lang,setLang(c){if(LANG[c]){lang=c;lay=LANG[c].lay;LS("lckb.lang",c);LS("lckb.lay",lay);render()}},
  layout:()=>lay,setLayout(i){if(LAY[i]){lay=i;LS("lckb.lay",i);render()}},
  langs:()=>Object.keys(LANG).map(c=>({code:c,name:LANG[c].n})),layouts:()=>Object.keys(LAY).map(i=>({id:i,name:LAY[i].n})),
