@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.28";window.LC_BUILT=B;
+<!doctype html><html><head><meta charset=utf8><script>/*LC-OTA*/(function(){var B="0.9.29";window.LC_BUILT=B;
 function c(a,b){a=String(a).split(".");b=String(b).split(".");for(var i=0;i<Math.max(a.length,b.length);i++){var d=(+a[i]||0)-(+b[i]||0);if(d)return d>0?1:-1}return 0}window.LC_CMP=c;
 if(window.LC_OTA_VER){window.LC_VER=window.LC_OTA_VER;return}window.LC_VER=B;
 if(location.protocol!=="file:")return;
@@ -95,7 +95,7 @@ li .t{min-width:0}
   display:flex;justify-content:center;pointer-events:none}
 .bar>div{width:100%;max-width:716px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .bar>div>*{pointer-events:auto}
-.tabs{display:flex;border:1px solid var(--line);background:var(--chip);border-radius:40px;padding:4px;box-shadow:var(--shadow);min-width:0}
+.tabs{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;display:flex;border:1px solid var(--line);background:var(--chip);border-radius:40px;padding:4px;box-shadow:var(--shadow);min-width:0}
 .tab{border:0;background:none;color:var(--fg);font:600 12px var(--sans);border-radius:36px;cursor:pointer;
   padding:7px clamp(9px,3vw,24px);display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap;
   max-width:170px;overflow:hidden;transition:max-width .28s ease,padding .28s ease,opacity .2s ease}
@@ -789,6 +789,14 @@ $("sort").onclick=()=>{st.alpha=!st.alpha;render()};
 $("more").onclick=e=>{e.stopPropagation();const m=$("menu");m.hidden=!m.hidden;$("more").setAttribute("aria-expanded",!m.hidden)};
 $("menu").onclick=e=>{const f=e.target.dataset.f;if(f){st.f=f;render()}};
 const tabs=$("tabs");
+// Appui long sur la barre, dans un chapitre : retour à la liste des livres
+let tbT=0,tbDone=0,tbX=0,tbY=0;const tbInCh=()=>st.view==="lib"&&st.book&&st.ch;
+tabs.addEventListener("pointerdown",e=>{if(!tbInCh()||!e.target.closest(".tab"))return;tbX=e.clientX;tbY=e.clientY;clearTimeout(tbT);
+  tbT=setTimeout(()=>{tbT=0;tbDone=Date.now();tabs.classList.remove("open");try{navigator.vibrate&&navigator.vibrate(12)}catch(x){}go(null,0)},450)});
+for(const n of["pointerup","pointercancel","pointerleave"])tabs.addEventListener(n,()=>{clearTimeout(tbT);tbT=0});
+tabs.addEventListener("pointermove",e=>{if(tbT&&Math.hypot(e.clientX-tbX,e.clientY-tbY)>10){clearTimeout(tbT);tbT=0}});
+tabs.addEventListener("contextmenu",e=>{if(tbInCh()||Date.now()-tbDone<800)e.preventDefault()});
+tabs.addEventListener("click",e=>{if(Date.now()-tbDone<800){e.stopImmediatePropagation();e.preventDefault()}},true);
 tabs.onclick=e=>{e.stopPropagation();const b=e.target.closest(".tab");if(!b)return;
   if(!tabs.classList.contains("open")){tabs.classList.add("open");return}
   if(b.getAttribute("aria-current")==="true"){tabs.classList.remove("open");return}
